@@ -1,18 +1,30 @@
-FROM python
+FROM golang:1.20-alpine as builder
 
 # Set the working directory
-WORKDIR /code
+WORKDIR /app
 
 # Copy the application code into the container
-COPY code/ /code
+COPY ./code /app
 
 # Copy and install dependencies
-COPY requirements.txt /code/requirements.txt
-RUN apt-get update && apt-get install -y python3-tk
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir Pillow
-RUN pip install flask
+RUN go mod init lego && go mod tidy && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o lego lego.go
+RUN ls -la /app
 
+FROM golang:1.20-alpine
+
+RUN apk add --no-cache ca-certificates
+# Set the working directory
+WORKDIR /app
+
+# Copy the built Go binary from the builder stage
+COPY --from=builder /app/lego /app/lego
+
+RUN chmod +x /app/lego
+
+RUN ls -ls /app
+
+# Expose the port the app runs on
 EXPOSE 5000
 
-ENTRYPOINT ["python lego.py"]
+# Command to run the application
+CMD ["/app/lego"]

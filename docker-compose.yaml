@@ -5,5 +5,3 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"  # Map container port 5000 to host port 5000
-    environment:
-      FLASK_ENV: development  # Optional: Enables debug mode
